@@ -7,14 +7,20 @@
             "SuperKernel\\Context\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "wheakerd",
             "email": "wheakerd@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "require": {
+        "php": ">=8.4",
         "psr/container": "^2.0@dev"
     }
 }

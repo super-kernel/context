@@ -7,23 +7,27 @@ use Psr\Container\ContainerInterface;
 
 /**
  * @ApplicationContext
- * @\ApplicationContext
+ * @\SuperKernel\Context\ApplicationContext
  */
-class ApplicationContext
+final class ApplicationContext
 {
-    static private ContainerInterface $container;
+    static
+    private ContainerInterface $container;
 
-    static public function getContainer(): ContainerInterface
+    static
+    public function getContainer(): ContainerInterface
     {
         return self::$container;
     }
 
-    static public function hasContainer(): bool
+    static
+    public function hasContainer(): bool
     {
         return isset(self::$container);
     }
 
-    static public function setContainer(ContainerInterface $container): ContainerInterface
+    static
+    public function setContainer(ContainerInterface $container): ContainerInterface
     {
         self::$container = $container;
         return $container;
