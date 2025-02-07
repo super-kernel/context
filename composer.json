@@ -21,6 +21,6 @@
     "minimum-stability": "stable",
     "require": {
         "php": ">=8.4",
-        "psr/container": "^2.0@dev"
+        "super-kernel/contract": "^1.0"
     }
 }
