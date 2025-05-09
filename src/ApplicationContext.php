@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace SuperKernel\Context;
 
-use SuperKernel\Contract\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * @ApplicationContext
