@@ -1,0 +1,31 @@
+{
+    "name": "super-kernel/context",
+    "type": "library",
+    "description": "The context component for super-kernel.",
+    "license": "MIT",
+    "keywords": [
+        "php",
+        "swoole",
+        "super-kernel",
+        "context"
+    ],
+    "autoload": {
+        "psr-4": {
+            "SuperKernel\\Context\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "wheakerd",
+            "email": "wheakerd@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=8.4",
+        "ext-swoole": ">=6.0"
+    },
+    "require-dev": {
+        "swoole/ide-helper": "^6.0"
+    }
+}
