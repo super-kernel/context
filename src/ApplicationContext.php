@@ -5,9 +5,6 @@ namespace SuperKernel\Context;
 
 use Psr\Container\ContainerInterface;
 
-/**
- * @deprecated
- */
 final class ApplicationContext
 {
 	private static ContainerInterface $container;

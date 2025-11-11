@@ -5,6 +5,7 @@ namespace SuperKernel\Context;
 
 use Swoole\Coroutine;
 use Swoole\Thread;
+use Throwable;
 use TypeError;
 
 /**
@@ -26,9 +27,15 @@ final class Context
 	public static function set(string $key, mixed $value): mixed
 	{
 		try {
-			self::$container[Thread::getId()][$key] = $value;
+			$tid = Thread::getId();
 		}
 		catch (TypeError) {
+			$tid = -1;
+		}
+
+		if ($tid) {
+			self::$container[$tid][$key] = $value;
+		} else {
 			self::$container[Coroutine::getCid()][$key] = $value;
 		}
 
@@ -44,11 +51,17 @@ final class Context
 	public static function get(string $key, mixed $default = null): mixed
 	{
 		try {
-			return self::$container[Thread::getId()][$key] ?? $default;
+			$tid = Thread::getId();
 		}
-		catch (TypeError) {
-			return self::$container[Coroutine::getCid()][$key] ?? $default;
+		catch (Throwable) {
+			$tid = -1;
 		}
+
+		if ($tid) {
+			return self::$container[$tid][$key] ?? $default;
+		}
+
+		return self::$container[Coroutine::getCid()][$key] ?? $default;
 	}
 
 	/**
@@ -59,9 +72,14 @@ final class Context
 	public static function has(string $key): bool
 	{
 		try {
-			return array_key_exists($key, self::$container[Thread::getId()] ?? []);
+			$tid = Thread::getId();
 		}
-		catch (TypeError) {
+		catch (Throwable) {
+			$tid = -1;
+		}
+
+		if ($tid) {
+			return array_key_exists($key, self::$container[$tid] ?? []);
 		}
 
 		return array_key_exists($key, self::$container[Coroutine::getCid()] ?? []);
@@ -77,7 +95,11 @@ final class Context
 		try {
 			$id = Thread::getId();
 		}
-		catch (TypeError) {
+		catch (Throwable) {
+			$id = -1;
+		}
+
+		if (!$id) {
 			$id = Coroutine::getCid();
 		}
 
