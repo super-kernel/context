@@ -6,7 +6,6 @@ namespace SuperKernel\Context;
 use Swoole\Coroutine;
 use Swoole\Thread;
 use Throwable;
-use TypeError;
 
 /**
  * @template TValue
@@ -29,7 +28,7 @@ final class Context
 		try {
 			$tid = Thread::getId();
 		}
-		catch (TypeError) {
+		catch (Throwable) {
 			$tid = -1;
 		}
 

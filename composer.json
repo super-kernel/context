@@ -24,6 +24,7 @@
         "swoole/ide-helper": "^6.0"
     },
     "config": {
+        "sort‑packages": true,
         "optimize-autoloader": true,
         "classmap-authoritative": true
     }
