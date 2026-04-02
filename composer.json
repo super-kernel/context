@@ -18,16 +18,16 @@
             "SuperKernel\\Context\\": "src/"
         }
     },
-    "minimum-stability": "stable",
-    "prefer-stable": true,
     "config": {
         "classmap-authoritative": true,
         "optimize-autoloader": true,
         "sort-packages": true
     },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
     "require": {
         "php": "~8.4.0",
-        "super-kernel/contract": "~1.0.0"
+        "super-kernel/contract": "dev-main"
     },
     "require-dev": {
         "swoole/ide-helper": "~6.0.0"
