@@ -41,7 +41,7 @@ final class ApplicationContext
 
         if (class_exists(ContainerProvider::class)) {
             try {
-                return self::setContainer(new ContainerProvider()());
+                return self::$container = new ContainerProvider()();
             } catch (Throwable $throwable) {
                 throw new ContainerInitializationException(sprintf(
                     'Unable to initialize the application container through %s.',

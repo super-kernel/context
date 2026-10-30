@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace SuperKernel\Context\Context;
 
 use ArrayObject;
-use LogicException;
-use Swoole\Thread;
-use Throwable;
+use SuperKernel\Context\Runtime\ActiveThread;
+use SuperKernel\Context\Runtime\ThreadIdentity;
 
 use function array_key_exists;
-use function class_exists;
 
 final class ThreadContext
 {
@@ -19,25 +17,25 @@ final class ThreadContext
 
     public static function support(): bool
     {
-        return null !== self::threadId();
+        return null !== ThreadIdentity::detect();
     }
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        $values = self::storages()[self::currentThreadId()] ?? [];
+        $values = (self::$storages ??= new ArrayObject())[ActiveThread::id()] ?? [];
 
         return array_key_exists($key, $values) ? $values[$key] : $default;
     }
 
     public static function has(string $key): bool
     {
-        return array_key_exists($key, self::storages()[self::currentThreadId()] ?? []);
+        return array_key_exists($key, (self::$storages ??= new ArrayObject())[ActiveThread::id()] ?? []);
     }
 
     public static function set(string $key, mixed $value): mixed
     {
-        $threadId = self::currentThreadId();
-        $storages = self::storages();
+        $threadId = ActiveThread::id();
+        $storages = self::$storages ??= new ArrayObject();
         $values = $storages[$threadId] ?? [];
         $values[$key] = $value;
         $storages[$threadId] = $values;
@@ -47,8 +45,8 @@ final class ThreadContext
 
     public static function clear(?string $key = null): void
     {
-        $threadId = self::currentThreadId();
-        $storages = self::storages();
+        $threadId = ActiveThread::id();
+        $storages = self::$storages ??= new ArrayObject();
 
         if (!isset($storages[$threadId])) {
             return;
@@ -71,37 +69,5 @@ final class ThreadContext
         }
 
         $storages[$threadId] = $values;
-    }
-
-    private static function currentThreadId(): int
-    {
-        $threadId = self::threadId();
-
-        if (null === $threadId) {
-            throw new LogicException('The Swoole thread context requires an active Swoole thread.');
-        }
-
-        return $threadId;
-    }
-
-    private static function threadId(): ?int
-    {
-        if (!class_exists(Thread::class, false)) {
-            return null;
-        }
-
-        try {
-            $threadId = Thread::getId();
-
-            return 0 <= $threadId ? $threadId : null;
-        } catch (Throwable) {
-            return null;
-        }
-    }
-
-    /** @return ArrayObject<int, array<string, mixed>> */
-    private static function storages(): ArrayObject
-    {
-        return self::$storages ??= new ArrayObject();
     }
 }
