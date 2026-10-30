@@ -9,7 +9,7 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95.27",
-        "phpunit/phpunit": "^13.4.3"
+        "phpunit/phpunit": "^13.4.5"
     },
     "conflict": {
         "ext-swoole": "<6.2.3 || >=6.3"
