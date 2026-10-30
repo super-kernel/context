@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SuperKernel\Context;
 
-use LogicException;
 use SuperKernel\Context\Context\CoroutineContext;
 use SuperKernel\Context\Context\ProcessContext;
 use SuperKernel\Context\Context\ThreadContext;
+use SuperKernel\Context\Runtime\EnvironmentContextSelector;
 
 /**
  * Provides static access to values stored in the active execution environment context.
@@ -26,7 +26,7 @@ final class Context
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $context = self::context();
+        $context = EnvironmentContextSelector::select(self::CONTEXTS);
 
         return $context::get($key, $default);
     }
@@ -36,7 +36,7 @@ final class Context
      */
     public static function has(string $key): bool
     {
-        $context = self::context();
+        $context = EnvironmentContextSelector::select(self::CONTEXTS);
 
         return $context::has($key);
     }
@@ -52,7 +52,7 @@ final class Context
      */
     public static function set(string $key, mixed $value): mixed
     {
-        $context = self::context();
+        $context = EnvironmentContextSelector::select(self::CONTEXTS);
 
         return $context::set($key, $value);
     }
@@ -62,23 +62,7 @@ final class Context
      */
     public static function clear(?string $key = null): void
     {
-        $context = self::context();
+        $context = EnvironmentContextSelector::select(self::CONTEXTS);
         $context::clear($key);
-    }
-
-    /**
-     * @return class-string
-     *
-     * @throws LogicException when no configured context supports the current environment
-     */
-    private static function context(): string
-    {
-        foreach (self::CONTEXTS as $context) {
-            if ($context::support()) {
-                return $context;
-            }
-        }
-
-        throw new LogicException('No context supports the current execution environment.');
     }
 }

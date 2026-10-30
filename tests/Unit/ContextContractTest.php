@@ -12,6 +12,7 @@ use SuperKernel\Context\Context;
 use SuperKernel\Context\Context\CoroutineContext;
 use SuperKernel\Context\Context\ProcessContext;
 use SuperKernel\Context\Context\ThreadContext;
+use SuperKernel\Context\Runtime\EnvironmentContextSelector;
 use Throwable;
 
 use function class_exists;
@@ -94,7 +95,6 @@ final class ContextContractTest extends TestCase
         self::assertFalse($reflection->hasMethod('__callStatic'));
         self::assertSame([
             'clear',
-            'context',
             'get',
             'has',
             'set',
@@ -112,9 +112,10 @@ final class ContextContractTest extends TestCase
             self::assertTrue($method->isStatic());
         }
 
-        $selector = $reflection->getMethod('context');
+        $selectorClass = new ReflectionClass(EnvironmentContextSelector::class);
+        $selector = $selectorClass->getMethod('select');
 
-        self::assertTrue($selector->isPrivate());
+        self::assertStringContainsString('@internal', (string) $selectorClass->getDocComment());
         self::assertTrue($selector->isStatic());
         self::assertStringContainsString('class-string', (string) $selector->getDocComment());
 
