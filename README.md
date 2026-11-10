@@ -4,56 +4,87 @@
 
 # SuperKernel Context
 
-`super-kernel/context` provides the process-local application container reference and a transparent execution-scope key-value context for SuperKernel. It does not require a concrete container implementation or the Swoole extension; when Swoole is present, its coroutine and thread identities provide isolated scopes. It accepts the optional Swoole extension in the `>=6.2.3 <6.3` range.
+`super-kernel/context` keeps the application container of a process and stores short-lived values for the code that is running now, separately for each Swoole coroutine and thread.
 
-## Execution-scope contexts
+## Installation
 
-Use `SuperKernel\Context\Context` for execution-scoped values:
+```bash
+composer require super-kernel/context
+```
+
+The package has no requirement beyond PHP. With the Swoole extension (`>=6.2.3 <6.3`), values are kept per coroutine and per thread. With `super-kernel/di`, the first request for the container creates it from the metadata of `skernel build`; without it, set a PSR-11 container yourself.
+
+## What it provides
+
+- `ApplicationContext::getContainer()`, which returns the process's container and creates it on first use when `super-kernel/di` is installed.
+- `ApplicationContext::setContainer()`, which sets the process's container to any PSR-11 container.
+- `Context::get()`, `has()`, `set()`, and `clear()`, static access to values of the current execution.
+- Separate values for each Swoole coroutine and Swoole thread, and process-wide values elsewhere, chosen anew on every call.
+
+It does not:
+
+- replace injection: services should receive their dependencies, not look them up;
+- clear values when a coroutine, request, or job ends, outside Swoole coroutines;
+- give native Fibers or Swow coroutines values of their own;
+- require a container implementation.
+
+## Quick start
+
+Store, read, and clear values of the current execution. Save the script as `bin/context.php`:
 
 ```php
+<?php
+
+declare(strict_types=1);
+
 use SuperKernel\Context\Context;
 
-Context::set('request-id', $requestId);
-$requestId = Context::get('request-id');
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+Context::set('request-id', 'req-1');
+Context::set('user', null);
+
+var_dump(Context::get('request-id'));
+var_dump(Context::has('user'), Context::get('locale', 'en'));
+
+Context::clear();
+
+var_dump(Context::has('request-id'));
 ```
 
-The static entry point exposes:
+Run the script:
 
-- `get()`, `has()`, and `set()` for values in the current scope;
-- `clear($key)` for one value and `clear()` for the current scope.
-
-`Context` works without a container: it never accesses `ApplicationContext` or resolves a service. On every call it selects the first available scope in this priority:
-
-1. Swoole coroutine;
-2. Swoole thread;
-3. process storage in the current PHP process.
-
-Missing Swoole capabilities are skipped automatically, and the selection is not cached, so a later call may use a different scope. Native Fibers and Swow coroutines are not runtime scopes; outside an active Swoole scope they use the process storage.
-
-Swoole stores coroutine values in its native context. Thread values are kept per Swoole thread identity, and process values for the lifetime of the PHP process. Clear values explicitly when their scope ends.
-
-## Application container context
-
-Set the canonical application container during bootstrap before application execution:
-
-```php
-use Psr\Container\ContainerInterface;
-use SuperKernel\Context\ApplicationContext;
-
-/** @var ContainerInterface $container */
-ApplicationContext::setContainer($container);
+```bash
+php bin/context.php
 ```
 
-Infrastructure code may then obtain that exact container:
+It prints:
 
-```php
-$container = ApplicationContext::getContainer();
+```text
+string(5) "req-1"
+bool(true)
+string(2) "en"
+bool(false)
 ```
 
-`setContainer()` returns the supplied container and replaces any previously stored container. When `getContainer()` is called before an explicit container is set, it checks for the optional `SuperKernel\Di\Provider\ContainerProvider`. If available, the provider is constructed and invoked once, and its valid `Psr\Container\ContainerInterface` result becomes the current container. The Context package does not require `super-kernel/di`; when that provider is unavailable, `getContainer()` throws `SuperKernel\Context\Exception\ContainerNotSetException`.
+## Public surface
 
-An explicitly supplied PSR-11 container must resolve class and interface identifiers to compatible instances.
+| Name | Kind | Purpose |
+| --- | --- | --- |
+| `SuperKernel\Context\ApplicationContext` | Class | `getContainer()` returns the process's container; `setContainer()` replaces it. |
+| `SuperKernel\Context\Context` | Class | Static `get()`, `has()`, `set()`, and `clear()` for values of the current coroutine, thread, or process. |
 
-A default-provider failure is wrapped in `SuperKernel\Context\Exception\ContainerInitializationException` with the original failure retained as its previous exception. An invalid provider result raises the same Context exception. A failed attempt does not poison the application context, so a later call may retry or an explicit `setContainer()` may recover it.
+## Behavior to know
 
-Application services should continue to use explicit constructor or property injection instead of treating the context as a general-purpose service locator. Use the static `Context` entry point only for short-lived contextual values.
+- `getContainer()` raises `SuperKernel\Context\Exception\ContainerNotSetException` with the message `The application context has no container.` when no container was set and `super-kernel/di` is not installed.
+- When creating the container fails, `getContainer()` raises `SuperKernel\Context\Exception\ContainerInitializationException` with the message `Unable to initialize the application container through SuperKernel\Di\Provider\ContainerProvider.` and the cause as its previous exception, such as the `BuildRequiredException` of a missing `skernel build`. A later call tries again.
+- `Context` uses the current Swoole coroutine first, then the current Swoole thread, then the process. Values stored outside a coroutine stay for the life of the process until you clear them.
+- `has()` reports a key that holds `null`; `get()` returns the given default only for a missing key.
+
+## Documentation
+
+The developer documentation describes the container and the execution values with complete examples, including Swoole coroutines, and what not to do: [SuperKernel Context](https://github.com/super-kernel/.github/blob/main/docs/components/context.md).
+
+## License
+
+Released under the MIT License. See [LICENSE](LICENSE).
